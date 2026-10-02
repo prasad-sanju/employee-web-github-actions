@@ -1,0 +1,23 @@
+name: CI - Build Web Application
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Validate web files
+        run: test -f index.html && test -f style.css && test -f script.js && test -f Dockerfile
+      - name: Build Docker image
+        run: docker build -t employee-web-app:${{ github.sha }} .
+      - name: Test Docker container
+        run: |
+          docker run -d --name employee-web -p 8080:80 employee-web-app:${{ github.sha }}
+          sleep 3
+          curl --fail http://localhost:8080
+          docker stop employee-web
